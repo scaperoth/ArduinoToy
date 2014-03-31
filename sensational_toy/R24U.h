@@ -141,7 +141,8 @@ int humid_speaker_delay = humid_speaker_seconds * (1000/global_delay); //seconds
 /***************************
  * LED VARIABLES
  ***************************/
-int fadeAmount = 20; //amount to fade by each iteration
+int fade_reset = 20;
+int fadeAmount = fade_reset; //amount to fade by each iteration
 int brightness = 0; //start fade value at 0
 /*
  * memory full pin used to alert user 
@@ -324,7 +325,7 @@ void alert_led(int fadepin){
   brightness = brightness + fadeAmount;
 
   // reverse the direction of the fading at the ends of the fade: 
-  if (brightness == 0 || brightness == 255) {
+  if (brightness <= 0 || brightness >= 240) {
     fadeAmount = -fadeAmount ; 
   }     
 }
@@ -334,7 +335,7 @@ void alert_led(int fadepin){
 void led_off(int led_pin){
   digitalWrite(led_pin, LOW);
   //reset fades
-  fadeAmount = 5; 
+  fadeAmount = fade_reset; 
   brightness = 0;
 }
 

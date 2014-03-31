@@ -9,6 +9,7 @@ import java.util.Enumeration;
 
 
 public class SerialTest implements SerialPortEventListener {
+	final int PROGRESSBAR_LENGTH = 20;
 	SerialPort serialPort;
 	Function F = new Function("Humidity Data");
 	Function tester = new Function("TEST");
@@ -109,9 +110,11 @@ public class SerialTest implements SerialPortEventListener {
 				if(input_val<0){
 					System.out.println();
 					System.out.println("Memory has been reset.");
-				}else
-					System.out.print(inputLine);
+				}else{
+					//System.out.print(inputLine);
 					F.add(count,input_val);
+					drawProgressBar((int)count, 510);
+				}
 				count ++; 
 				if(count==510){
 					F.show();
@@ -126,6 +129,39 @@ public class SerialTest implements SerialPortEventListener {
 
 		// Ignore all the other eventTypes, but you should consider the other ones.
 		
+	}
+
+	/**
+	 * Draw a status bar
+	 * code courtesy of
+	 * http://stackoverflow.com/questions/3225672/text-based-loading-bar-when-running-java-in-command-prompt
+	 */
+	public void drawProgressBar(int numerator, int denominator) {
+	    int percent = (int) (((double) numerator / (double) denominator) * 100);
+
+	    String bar = "[";
+	    int lines = round((PROGRESSBAR_LENGTH * numerator) / denominator);
+	    int blanks = PROGRESSBAR_LENGTH - lines;
+
+	    for (int i = 0; i < lines; i++)
+	        bar += "*";
+
+	    for (int i = 0; i < blanks; i++)
+	        bar += " ";
+
+	    bar += "] " + percent + "%";
+
+	    System.out.print(bar + "\r");
+	}
+
+	private int round(double dbl) {
+	    int noDecimal = (int) dbl;
+	    double decimal = dbl - noDecimal;
+
+	    if (decimal >= 0.5)
+	        return noDecimal + 1;
+	    else
+	        return noDecimal;
 	}
 
 	public static void main(String[] args) throws Exception {
