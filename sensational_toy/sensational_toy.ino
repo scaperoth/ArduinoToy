@@ -134,13 +134,31 @@ void setup(){
 }
 
 void loop(){
+  //check humidity and update bargraph
   activate_bargraph();
+  
+  //check range sensor values
   find_range();
+  
+  //set the control value to whatever is stored in the control mem address
   control_val = EEPROM.read(CONTROLBIT);
-  /**/
+  /*
+   * If the serial monitor is closed, and the control value says to write
+   * and the timer is at the chosen interval (see timing variables)
+   * then write humidity data to memory
+   */
   if(!Serial && control_val==WRITE && timer%rom_delay==0){
      mem_write();
    }
+   /*
+   * else if the control mem address stores a read value
+   * or the serial monitor is open, then output data.
+   *
+   * the serial monitor option is there in case
+   * someone would like to read data before all 510s
+   * memory address have been filled up, which may take
+   * a long time. 
+   */
    else if(control_val == READ || Serial){
      mem_read();
    }
