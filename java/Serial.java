@@ -8,7 +8,7 @@ import gnu.io.SerialPortEventListener;
 import java.util.Enumeration;
 
 
-public class SerialTest implements SerialPortEventListener {
+public class Serial implements SerialPortEventListener {
 	final int PROGRESSBAR_LENGTH = 20;
 	SerialPort serialPort;
 	Function F = new Function("Humidity Data");
@@ -165,7 +165,7 @@ public class SerialTest implements SerialPortEventListener {
 	}
 
 	public static void main(String[] args) throws Exception {
-		SerialTest main = new SerialTest();
+		Serial main = new Serial();
 		main.initialize();
 		Thread t=new Thread() {
 			public void run() {
