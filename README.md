@@ -24,10 +24,10 @@ and creates a graphical representation of the data collected over time.
 ##Usage    
 In order to use this application, you first need to install [Java](http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html) and [set up the RXTX Java library](http://playground.arduino.cc/Interfacing/Java#.UzlPUvldV8E). 
 
-[Download](https://github.com/scaperoth/ArduinoToy/archive/master.zip) or [clone](github-windows://openRepo/https://github.com/scaperoth/ArduinoToy) this project  and navigate to the ArduinoToy/sensational_toy.ino file. Load this into our [Arduino IDE](http://arduino.cc/en/main/software), compile, and install.
+[Download](https://github.com/scaperoth/ArduinoToy/archive/master.zip) or [clone](github-windows://openRepo/https://github.com/scaperoth/ArduinoToy) this project  and navigate to the ArduinoToy/sensational_toy.ino file. Load this into your [Arduino IDE](http://arduino.cc/en/main/software), compile, and install.
 
 ###Usage Notes & Customization   
-These libraries can easily be customized to match your pin configuration or Arduino version. All of the function and variable definitions are found in the R24U.h file.   
+This project can easily be customized to match your hardware. All of the function and variable definitions are found in the R24U.h file.   
    
 Most of the main values (pin configurations, alert values, and others) can be manipulated using the given "setter" functions found in the R24U.h file. 
 
