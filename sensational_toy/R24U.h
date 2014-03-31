@@ -141,7 +141,7 @@ int humid_speaker_delay = humid_speaker_seconds * (1000/global_delay); //seconds
 /***************************
  * LED VARIABLES
  ***************************/
-int fadeAmount = 5; //amount to fade by each iteration
+int fadeAmount = 20; //amount to fade by each iteration
 int brightness = 0; //start fade value at 0
 /*
  * memory full pin used to alert user 
