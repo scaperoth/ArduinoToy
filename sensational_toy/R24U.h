@@ -15,7 +15,7 @@
  * HISTORY:
  *
  #######################################################################*/
- 
+
 /***************************
  * CONSTANT DEFINITIONS
  ***************************/
@@ -82,6 +82,9 @@ void activate_bargraph();
 void setup_ranger(void);
 void find_range(void);
 
+//C0 SENSOR FUNCTION(S)
+void get_C0_value();
+
 //MEMORY FUNCTION(S)
 void clearData(void);
 void reset_mem(void);
@@ -122,7 +125,6 @@ char range_sounds[] = {
 char c02_sounds[] = {
   240};
 
-  
 /***************************
  * TIMING VARIABLES
  ***************************/
@@ -141,7 +143,7 @@ int humid_speaker_delay = humid_speaker_seconds * (1000/global_delay); //seconds
 /***************************
  * LED VARIABLES
  ***************************/
-int fade_reset = 20;
+int fade_reset = 40;
 int fadeAmount = fade_reset; //amount to fade by each iteration
 int brightness = 0; //start fade value at 0
 /*
@@ -150,7 +152,6 @@ int brightness = 0; //start fade value at 0
  * and out
  */
 int memory_full_pin = 11;
-
 
 /***************************
  * HUMIDITY SETUP
@@ -184,14 +185,19 @@ int trigPin = 9; //trig to pin 9
 int echoPin = 10; //echo to pin 10
 
 /***************************
+ * C0 SENSOR VARIABLES
+ ***************************/
+int c0sensorval;
+
+/***************************
  * MEM CONTROL VARIABLES
  ***************************/
 int control_val = 0;
 int address_val = 0;
 
 /*#################################################
- # FUNCTIONS: CAN BE CALLED FROM MAIN PROGRAM
- # TO SET VARIOUS ELEMENTS OF THE PROGRAM
+ # FUNCTIONS: CAN BE CALLED FROM THE MAIN PROGRAM
+ # TO SET AND CONTROL VARIOUS ELEMENTS OF THE DEVICE
  # 
  #   CONTENTS:
  #   PIN SETTERS
@@ -206,8 +212,12 @@ int address_val = 0;
  #   VOICEBOX FUNCTION(S)
  ###################################################
  
- /***************************
+/***************************
  * PIN SETTERS
+ *
+ * CONTENTS:
+ *   void set_range_pins(int, int)
+ *   void set_humidity_pins(int)
  ***************************/
 void set_range_pins(int new_trigPin, int new_echoPin){
   trigPin = new_trigPin;
@@ -325,7 +335,7 @@ void alert_led(int fadepin){
   brightness = brightness + fadeAmount;
 
   // reverse the direction of the fading at the ends of the fade: 
-  if (brightness <= 0 || brightness >= 240) {
+  if (brightness == 0 || brightness == 240) {
     fadeAmount = -fadeAmount ; 
   }     
 }
@@ -407,7 +417,6 @@ void activate_bargraph(){
   }
 }
 
-
 /***************************
  * RANGER FUNCTION(S)
  * 
@@ -443,6 +452,18 @@ void find_range(){
   if(distance<=range_alarm_value){
     speakjet.print(range_sounds);
   }
+}
+
+/***************************
+ * C0 SENSOR FUNCTION(S)
+ * 
+ * CONTENTS:
+ *   void get_C0_value()
+ ***************************/
+void get_C0_value(){
+  sensorValue = analogRead(0);       // read analog input pin 0
+  //do something with the c0 sensor...
+  //Serial.println(sensorValue, DEC);  // prints the value read
 }
 
 /***************************
@@ -544,6 +565,7 @@ void increment_timer(){
     timer = 0;
   }
 }
+
 
 
 

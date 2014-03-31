@@ -32,6 +32,7 @@
  *         BEGIN PROGRAM
  *********************************/
 void setup(){
+  //init bargraph
   BG.begin();
   
   //set address_val to currently saved value
@@ -52,7 +53,7 @@ void setup(){
 void loop(){
   //check humidity and update bargraph
   activate_bargraph();
-  
+  get_C0_value();
   //check range sensor values
   find_range();
   //set the control value to whatever is stored in the control mem address
