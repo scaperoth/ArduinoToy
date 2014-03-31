@@ -19,7 +19,7 @@ to take the data from the EEPROM and display it in a user-friendly graph.
 The java program collects data from the [Virtuabotix DHT22 Temperature & Humidity Sensor](https://www.virtuabotix.com/product/virtuabotix-dht22-temperature-humidity-sensor-arduino-microcontroller-circuits/)   
 and creates a graphical representation of the data collected over time.
     
->This project uses an Arduino Leonardo. 
+>By default, this project is set up for an Arduino Leonardo. In order to use other versions of the Arduino or other microcontrollers, some pin configurations may need to change. Please refer to the components links below for details on how to set up each component for your device. 
 
 ##Usage    
 In order to use this application, you first need to install [Java](http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html) and [set up the RXTX Java library](http://playground.arduino.cc/Interfacing/Java#.UzlPUvldV8E). 
