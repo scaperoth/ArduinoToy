@@ -8,10 +8,11 @@
 /***************************
  * INCLUDED FILES
  ***************************/
-#include <EEPROM.h>
-#include <SFEbarGraph.h>
-#include <SPI.h>
-#include <dht22.h>
+#include "EEPROM.h"
+#include "SFEbarGraph.h"
+#include "SPI.h"
+#include "dht22.h"
+
 //Soft serial library used to send serial commands on pin 2 instead of regular serial pin.
 #include <SoftwareSerial.h>
 
