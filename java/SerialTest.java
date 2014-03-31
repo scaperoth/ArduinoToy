@@ -104,12 +104,21 @@ public class SerialTest implements SerialPortEventListener {
 		if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
 			try {
 				String inputLine=input.readLine();
-				System.out.println(inputLine);
-				F.add(count, Double.parseDouble(inputLine));
+				
+				double input_val =  Double.parseDouble(inputLine);
+				if(input_val<0){
+					System.out.println();
+					System.out.println("Memory has been reset.");
+				}else
+					System.out.print(inputLine);
+					F.add(count,input_val);
 				count ++; 
 				if(count==510){
 					F.show();
 				}
+
+
+
 			} catch (Exception e) {
 				System.err.println(e.toString());
 			}

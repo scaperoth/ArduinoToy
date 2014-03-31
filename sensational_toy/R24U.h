@@ -228,6 +228,9 @@ void alert_led(int fadepin){
  */
 void led_off(int led_pin){
   digitalWrite(led_pin, LOW);
+  //reset fades
+  fadeAmount = 5; 
+  brightness = 0;
 }
 
 /***************************
@@ -369,8 +372,8 @@ void reset_mem(){
   EEPROM.write(CONTROLBIT, WRITE);
   //reset address value to zero
   address_val = 0;
-  //output that the memory has been reset
-  Serial.println("Memory Reset");
+  //output value to indicate the memory has been reset
+  Serial.println("-1");
   //wait for the serial connection to be closed
   while(Serial);
 }
