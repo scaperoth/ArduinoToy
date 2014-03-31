@@ -132,7 +132,7 @@ int timer = 0;
 int global_delay = 100;
 
 //delay for various sensors and components
-double rom_minutes = .01; //how often to save sensor data
+double rom_minutes = .0017; //how often to save sensor data
 double humid_speaker_seconds = 4; //how long to wait to alarm
 
 int rom_delay = rom_minutes * (60000/global_delay); //minutes relative to global delay
@@ -187,7 +187,6 @@ int echoPin = 10; //echo to pin 10
  ***************************/
 int control_val = 0;
 int address_val = 0;
-
 
 /*#################################################
  # FUNCTIONS: CAN BE CALLED FROM MAIN PROGRAM
@@ -258,7 +257,6 @@ void set_humidity_sensor_delay(double new_humidity_delay){
   humid_speaker_delay = new_humidity_delay * (1000/global_delay); //seconds relative to global delay
 }
 
-
 /***************************
  * VOICEBOX FUNCTION(S)
  *
@@ -298,7 +296,6 @@ void setup_voicebox(){
   digitalWrite(RES, HIGH);
 
 }
-
 
 /***************************
  * LED FUNCTION(S)
@@ -440,7 +437,7 @@ void find_range(){
   //convert pulse value to cm
   distance = (duration/2) / 29.1;
 
-  Serial.println(distance);
+  //Serial.println(distance);
   //set off alarm if distance is lte alarm value
   if(distance<=range_alarm_value){
     speakjet.print(range_sounds);
