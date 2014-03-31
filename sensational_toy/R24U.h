@@ -62,12 +62,6 @@ char c02_sounds[] = {
 #define ADDRESSBIT 511
 
 /***************************
- * MEM CONTROL VARIABLES
- ***************************/
-int control_val = 0;
-int address_val = 0;
-
-/***************************
  * TIMING VARIABLES
  ***************************/
 //init relative timer
@@ -76,11 +70,35 @@ int timer = 0;
 int global_delay = 100;
 
 //delay for various sensors and components
-double rom_minutes = .1; //how often to save sensor data
+double rom_minutes = .0017; //how often to save sensor data
 double humid_speaker_seconds = 4; //how long to wait to alarm
 
 int rom_delay = rom_minutes * (60000/global_delay); //minutes relative to global delay
 int humid_speaker_delay = humid_speaker_seconds * (1000/global_delay); //seconds relative to global delay
+
+/***************************
+ * LED VARIABLES
+ ***************************/
+int fadeAmount = 5; //amount to fade by each iteration
+int brightness = 0; //start fade value at 0
+/*
+ * memory full pin used to alert user 
+ * when the EEPROM is full by fading in 
+ * and out
+ */
+int memory_full_pin = 11;
+
+
+/***************************
+ * HUMIDITY SETUP
+ * DTA to Pin 6
+ ***************************/
+dht22 DHT22;
+int DHTPIN = 6;     // what pin we're connected to
+int humidity_val= 0;
+int chk;
+//at what humidity level should the alarm go off
+int humidity_alarm_value = 40; 
 
 /***************************
  * BARGRAPH SETUP
@@ -95,23 +113,18 @@ SFEbarGraph BG;
 int num_leds = 0;
 
 /***************************
- * HUMIDITY SETUP
- * DTA to Pin 6
- ***************************/
-dht22 DHT22;
-int DHTPIN = 6;     // what pin we're connected to
-int humidity_val= 0;
-int chk;
-//at what humidity level should the alarm go off
-int humidity_alarm_value = 40; 
-
-/***************************
  * RANGE FINDER VARIABLES
  ***************************/
 //at what max range should the alarm go off (in cm)
 int range_alarm_value = 5;
 int trigPin = 9; //trig to pin 9
 int echoPin = 10; //echo to pin 10
+
+/***************************
+ * MEM CONTROL VARIABLES
+ ***************************/
+int control_val = 0;
+int address_val = 0;
 
 /***************************
  * PIN SETTERS
@@ -132,8 +145,10 @@ void set_humidity_pins(int new_DHT22_pin){
  #   CONTENTS:
  #   ALARM SETTERS
  #   TIMER SETTERS
+ #   LED FUNCTION(S)
  #   HUMIDITY FUNCTION(S)
  #   BARGRAPH FUNCTION(S)
+ #   RANGER FUNCTION(S)
  #   MEMORY FUNCTION(S)
  #   TIMING FUNCTION(S)
  #   VOICEBOX FUNCTION(S)
@@ -152,6 +167,10 @@ void set_humidity_alarm(int new_humidity_alarm){
 
 void set_range_alarm(int new_range_alarm){
   range_alarm_value = new_range_alarm;
+}
+
+void set_mem_full_led(int new_mem_full_pin){
+  memory_full_pin = new_mem_full_pin;
 }
 
 /*********************************
@@ -174,6 +193,42 @@ void set_humidity_sensor_delay(double new_humidity_delay){
   humid_speaker_delay = new_humidity_delay * (1000/global_delay); //seconds relative to global delay
 }
 
+/***************************
+ * LED FUNCTION(S)
+ * 
+ * CONTENTS:
+ *   setup_leds()
+ *   alert_led()
+ ***************************/
+/**
+ * Sets initial values of 
+ * LEDS
+ */
+void setup_leds(){
+  pinMode(memory_full_pin, OUTPUT);
+}
+/** 
+ * fades a pin in and out based on the 
+ * global delay time. 
+ */
+void alert_led(int fadepin){
+  // set the brightness of pin 9:
+  analogWrite(fadepin, brightness);    
+
+  // change the brightness for next time through the loop:
+  brightness = brightness + fadeAmount;
+
+  // reverse the direction of the fading at the ends of the fade: 
+  if (brightness == 0 || brightness == 255) {
+    fadeAmount = -fadeAmount ; 
+  }     
+}
+/** 
+ * turns off an LED
+ */
+void led_off(int led_pin){
+  digitalWrite(led_pin, LOW);
+}
 
 /***************************
  * HUMIDITY FUNCTION(S)
@@ -355,8 +410,10 @@ void mem_write(){
  * memeory locations using reset_mem().
  */
 void mem_read(){
+  alert_led(memory_full_pin);
   //wait until a Serial connection is made
   if(Serial){ 
+    led_off(memory_full_pin);
     readData();
     reset_mem();
   }
@@ -418,6 +475,4 @@ void setup_voicebox(){
   digitalWrite(RES, HIGH);
 
 }
-
-
 

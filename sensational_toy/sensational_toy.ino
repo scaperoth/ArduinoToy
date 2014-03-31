@@ -40,6 +40,7 @@ void setup(){
   Serial.begin(9600);
   
   /*SETUP FUNCTIONS*/
+  setup_leds();
   setup_voicebox();
   setup_ranger();
   DHT22.attach(DHTPIN);
@@ -54,7 +55,6 @@ void loop(){
   
   //check range sensor values
   find_range();
-  
   //set the control value to whatever is stored in the control mem address
   control_val = EEPROM.read(CONTROLBIT);
   /*
