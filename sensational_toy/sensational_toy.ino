@@ -40,8 +40,8 @@ void setup(){
   Serial.begin(9600);
   
   /*SETUP FUNCTIONS*/
-  setup_leds();
   setup_voicebox();
+  setup_leds();
   setup_ranger();
   DHT22.attach(DHTPIN);
   
@@ -63,7 +63,7 @@ void loop(){
    * then write humidity data to memory
    */
   if(!Serial && control_val==WRITE && timer%rom_delay==0){
-     mem_write();
+     //mem_write();
    }
    /*
    * else if the control mem address stores a read value
@@ -75,7 +75,7 @@ void loop(){
    * a long time. 
    */
    else if(control_val == READ || Serial){
-     mem_read();
+     //mem_read();
    }
    
   increment_timer();

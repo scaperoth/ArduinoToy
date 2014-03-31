@@ -9,17 +9,17 @@
  * NOTES: Use setter functions to change timer and pin variables
  *        Use various other functions to control behavior of sensors and 
  *        actuators.
- *
+ *        
+ *        The layout of this file follows the function prototypes.
+ *        
  * HISTORY:
  *
  #######################################################################*/
-
+ 
 /***************************
- * SPARKJET VOICEBOX SETUP
- * GND on SPK-
- * VCC on SPK+
+ * CONSTANT DEFINITIONS
  ***************************/
-//Define the Pin Numbers for the sketch.
+//VOICEBOX Definitions
 #define E0  5
 #define E1  6
 #define E2  7
@@ -35,6 +35,76 @@
 
 #define txPin  2
 
+//MEMORY MANIPULATION
+#define READ 0
+#define WRITE 1
+#define CONTROLBIT 512
+#define ADDRESSBIT 511
+
+
+/*#################################
+ #
+ #     FUNCTION PROTOTYPES
+ #       (for reference)
+ #
+ #################################*/
+
+//PIN SETTERS
+void set_range_pins(int, int);
+void set_humidity_pins(int); 
+
+//ALARM SETTERS
+void set_humidity_alarm(int);
+void set_range_alarm(int);
+void set_mem_full_led(int);
+
+//TIMER SETTERS
+void set_global_delay(double);
+void set_rom_sensor_delay(double);
+void set_humidity_sensor_delay(double);
+
+//VOICEBOX FUNCTION(S)
+void setup_voicebox(void);
+
+//LED FUNCTION(S)
+void setup_leds(void);
+void alert_led(int);
+void led_off(int);
+
+//HUMIDITY FUNCTION(S)
+int check_humidity_sensor(void);
+
+//BARGRAPH FUNCTION(S)
+void fill_leds(int);
+void activate_bargraph();
+
+//RANGER FUNCTION(S)
+void setup_ranger(void);
+void find_range(void);
+
+//MEMORY FUNCTION(S)
+void clearData(void);
+void reset_mem(void);
+void readData(void);
+void mem_write(void);
+void mem_read(void);
+
+//TIMING FUNCTION(S)
+void increment_timer(void);
+
+
+/*##############################
+ #      
+ #       COMPONENT SETUP
+ #
+ #############################*/
+
+/*********************************
+ * SPARKJET VOICEBOX VARIABLES
+ * must come first because of pin setup
+ * GND on SPK-
+ * VCC on SPK+
+ *********************************/
 //Create a SoftSerial Objet
 SoftwareSerial speakjet = SoftwareSerial(0, txPin);
 
@@ -52,15 +122,7 @@ char range_sounds[] = {
 char c02_sounds[] = {
   240};
 
-/***************************
- * CONSTANT DEFINITIONS
- ***************************/
-//MEMORY MANIPULATION
-#define READ 0
-#define WRITE 1
-#define CONTROLBIT 512
-#define ADDRESSBIT 511
-
+  
 /***************************
  * TIMING VARIABLES
  ***************************/
@@ -70,7 +132,7 @@ int timer = 0;
 int global_delay = 100;
 
 //delay for various sensors and components
-double rom_minutes = .0017; //how often to save sensor data
+double rom_minutes = .01; //how often to save sensor data
 double humid_speaker_seconds = 4; //how long to wait to alarm
 
 int rom_delay = rom_minutes * (60000/global_delay); //minutes relative to global delay
@@ -126,23 +188,13 @@ int echoPin = 10; //echo to pin 10
 int control_val = 0;
 int address_val = 0;
 
-/***************************
- * PIN SETTERS
- ***************************/
-void set_range_pins(int new_trigPin, int new_echoPin){
-  trigPin = new_trigPin;
-  echoPin = new_echoPin;
-}
-
-void set_humidity_pins(int new_DHT22_pin){
-  DHTPIN = new_DHT22_pin;
-}
 
 /*#################################################
  # FUNCTIONS: CAN BE CALLED FROM MAIN PROGRAM
  # TO SET VARIOUS ELEMENTS OF THE PROGRAM
  # 
  #   CONTENTS:
+ #   PIN SETTERS
  #   ALARM SETTERS
  #   TIMER SETTERS
  #   LED FUNCTION(S)
@@ -154,12 +206,25 @@ void set_humidity_pins(int new_DHT22_pin){
  #   VOICEBOX FUNCTION(S)
  ###################################################
  
+ /***************************
+ * PIN SETTERS
+ ***************************/
+void set_range_pins(int new_trigPin, int new_echoPin){
+  trigPin = new_trigPin;
+  echoPin = new_echoPin;
+}
+
+void set_humidity_pins(int new_DHT22_pin){
+  DHTPIN = new_DHT22_pin;
+}
+
 /***************************
  * ALARM SETTERS
  * 
  * CONTENTS:
- *   set_humidity_alarm()
- *   set_range_alarm()
+ *   void set_humidity_alarm(int)
+ *   void set_range_alarm(int)
+ *   void set_mem_full_led(int)
  ***************************/
 void set_humidity_alarm(int new_humidity_alarm){
   humidity_alarm_value = new_humidity_alarm;
@@ -177,9 +242,9 @@ void set_mem_full_led(int new_mem_full_pin){
  * TIMER SETTERS
  * 
  * CONTENTS:
- *   set_global_delay()
- *   set_rom_sensor_delay()
- *   set_humidity_sensor_delay()
+ *   void set_global_delay(double)
+ *   void set_rom_sensor_delay(double)
+ *   void set_humidity_sensor_delay(double)
  *********************************/
 void set_global_delay(double gl_delay){
   global_delay = gl_delay;
@@ -193,12 +258,55 @@ void set_humidity_sensor_delay(double new_humidity_delay){
   humid_speaker_delay = new_humidity_delay * (1000/global_delay); //seconds relative to global delay
 }
 
+
+/***************************
+ * VOICEBOX FUNCTION(S)
+ *
+ * CONTENTS:
+ *   void setup_voicebox()
+ ***************************/
+/**
+ * Sets voicebox shield to all 
+ * necessary initial values
+ * 
+ * used in Setup();
+ */
+void setup_voicebox(){
+  //Configure the pins for the SpeakJet module
+  pinMode(txPin, OUTPUT);
+  pinMode(SPK, INPUT);
+
+  //Set up a serial port to talk from Arduino to the SpeakJet module on pin 3.
+  speakjet.begin(9600);    
+
+  //Configure the Ready pin as an input
+  pinMode(RDY, INPUT);
+
+  //Configure Reset line as an output
+  pinMode(RES, OUTPUT);
+
+  //Configure all of the Event pins as outputs from Arduino, and set them Low.
+  for(int i=E0; i<=E7; i++)
+  {
+    pinMode(i, OUTPUT);
+    digitalWrite(i, LOW);
+  }
+
+  //All I/O pins are configured. Reset the SpeakJet module
+  digitalWrite(RES, LOW);
+  delay(100);
+  digitalWrite(RES, HIGH);
+
+}
+
+
 /***************************
  * LED FUNCTION(S)
  * 
  * CONTENTS:
- *   setup_leds()
- *   alert_led()
+ *  void setup_leds()
+ *  void alert_led(int)
+ *  void led_off(int)
  ***************************/
 /**
  * Sets initial values of 
@@ -237,7 +345,7 @@ void led_off(int led_pin){
  * HUMIDITY FUNCTION(S)
  *
  * CONTENTS:
- *   check_humidity_sensor()
+ *   int check_humidity_sensor()
  ***************************/
 /**
  * checks if humidity sensor is ready
@@ -261,8 +369,8 @@ int check_humidity_sensor(){
  * BARGRAPH FUNCTION(S)
  * 
  * CONTENTS:
- *   fill_leds()
- *   activate_bargraph()
+ *   void fill_leds(int)
+ *   void activate_bargraph()
  ***************************/
 /**
  * find the inverse of the max led
@@ -306,8 +414,8 @@ void activate_bargraph(){
  * RANGER FUNCTION(S)
  * 
  * CONTENTS:
- *   setup_ranger()
- *   find_range()
+ *   void setup_ranger()
+ *   void find_range()
  ***************************/
 /**
  * sets all necessary pins for range sensor
@@ -332,7 +440,7 @@ void find_range(){
   //convert pulse value to cm
   distance = (duration/2) / 29.1;
 
-  //Serial.println(distance);
+  Serial.println(distance);
   //set off alarm if distance is lte alarm value
   if(distance<=range_alarm_value){
     speakjet.print(range_sounds);
@@ -343,11 +451,11 @@ void find_range(){
  * MEMORY FUNCTION(S)
  * 
  * CONTENTS:
- *   clearData()
- *   reset_mem()
- *   readData()
- *   mem_write()
- *   mem_read()
+ *   void clearData()
+ *   void reset_mem()
+ *   void readData()
+ *   void mem_write()
+ *   void mem_read()
  ***************************/
 
 /**
@@ -426,7 +534,7 @@ void mem_read(){
  * TIMING FUNCTION(S)
  * 
  * CONTENTS:
- *   increment_timer()
+ *   void increment_timer()
  ***************************/
 /**
  * timer that keeps relative time for
@@ -439,43 +547,5 @@ void increment_timer(){
   }
 }
 
-/***************************
- * VOICEBOX FUNCTION(S)
- * 
- * CONTENTS:
- *   setup_voicebox()
- ***************************/
-/**
- * Sets voicebox shield to all 
- * necessary initial values
- * 
- * used in Setup();
- */
-void setup_voicebox(){
-  //Configure the pins for the SpeakJet module
-  pinMode(txPin, OUTPUT);
-  pinMode(SPK, INPUT);
 
-  //Set up a serial port to talk from Arduino to the SpeakJet module on pin 3.
-  speakjet.begin(9600);    
-
-  //Configure the Ready pin as an input
-  pinMode(RDY, INPUT);
-
-  //Configure Reset line as an output
-  pinMode(RES, OUTPUT);
-
-  //Configure all of the Event pins as outputs from Arduino, and set them Low.
-  for(int i=E0; i<=E7; i++)
-  {
-    pinMode(i, OUTPUT);
-    digitalWrite(i, LOW);
-  }
-
-  //All I/O pins are configured. Reset the SpeakJet module
-  digitalWrite(RES, LOW);
-  delay(100);
-  digitalWrite(RES, HIGH);
-
-}
 
