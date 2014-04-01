@@ -27,7 +27,9 @@ public class Serial implements SerialPortEventListener {
 			"COM7", // Windows
 			"COM8", // Windows
 			"COM9", // Windows
-			"COM10" // Windows
+			"COM10", // Windows
+		        "COM11", // Windows
+			"COM12" // Windows
 	};
 
 	/**
