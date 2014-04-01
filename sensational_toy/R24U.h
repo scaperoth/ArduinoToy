@@ -66,8 +66,9 @@ void set_humidity_sensor_delay(double);
 
 //VOICEBOX FUNCTION(S)
 void setup_voicebox(void);
-void play_sounds(char sounds[]);
+void play_sounds(char[], int);
 void check_sound_lock();
+void sound_interrupt();
 
 //LED FUNCTION(S)
 void setup_leds(void);
@@ -133,6 +134,10 @@ char humidity_sounds[] = {
 char c02_sounds[] = {
   240, NULLTERM};
 
+char interrupt_sound[] = {
+  NULLTERM
+};
+
 /***************************
  * TIMING VARIABLES
  ***************************/
@@ -145,9 +150,10 @@ int sound_delay = 1; //default delay for all sounds
 int delay_minutes_conv = (60000/global_delay);
 int delay_seconds_conv = (1000/global_delay);
 
+int max_uninterupted_delay = 10 * delay_seconds_conv; //sets max "uninteruptable" sound
 //delay for various sensors and components
 double rom_minutes = .0017; //how often to save sensor data
-double humid_speaker_seconds = 10; //how long to wait to alarm
+double humid_speaker_seconds = 300; //how long to wait to alarm in seconds
 double ranger_speaker_seconds = 1; //how long to wait to alarm
 
 int rom_delay = rom_minutes * delay_minutes_conv; //minutes relative to global delay
@@ -292,8 +298,9 @@ void set_humidity_sensor_delay(double new_humidity_delay){
  *
  * CONTENTS:
  *   void setup_voicebox()
- *   void play_sounds(char sounds[])
+ *   void play_sounds(char[], int)
  *   void check_sound_lock()
+ *   void sound_interrupt()
  ***************************/
 /**
  * Sets voicebox shield to all 
@@ -334,12 +341,15 @@ void setup_voicebox(){
  * resets the action_timer
  */
 void play_sounds(char sounds[], int delay_value){
-  //Serial.println("Play Sound");
-  turn_on_full_rgb();
-  speakjet.print(sounds);
-  sound_playing = 1;
-  sound_delay = delay_value;
-  action_timer=0; //restart action timer
+  //sounds are uninterruptable unless sound_interrupt() is called
+  if(!sound_playing){
+    //Serial.println("Play Sound");
+    turn_on_full_rgb();
+    speakjet.print(sounds);
+    sound_playing = 1;
+    sound_delay = delay_value;
+    action_timer=0; //restart action timer
+  }
 }
 /**
  * Resets control variables for 
@@ -352,6 +362,15 @@ void check_sound_lock(){
   if(action_timer%sound_delay ==0 && sound_playing == 1){
     sound_playing = 0;
     turn_off_rgb();
+  }
+}
+/**
+ * interrupt for sounds
+ */
+void sound_interrupt(){
+  if(sound_delay>max_uninterupted_delay){
+    sound_playing = 0;
+    play_sounds(interrupt_sound, 1);
   }
 }
 
@@ -480,8 +499,10 @@ void activate_bargraph(){
   }
 
   //alarm if humidity is below alarm value and proper increment is reached
-  if(humidity_val>=humidity_alarm_value && !sound_playing){
+  if(humidity_val>=humidity_alarm_value){
     play_sounds(humidity_sounds, humid_speaker_delay);
+  }else if(humidity_val<humidity_alarm_value){
+    sound_interrupt();
   }
 }
 
@@ -517,7 +538,7 @@ void find_range(){
 
   //Serial.println(distance);
   //set off alarm if distance is lte alarm value
-  if(distance<=range_alarm_value && !sound_playing){
+  if(distance<=range_alarm_value){
     play_sounds(range_sounds, ranger_speaker_delay);
   }
 }
