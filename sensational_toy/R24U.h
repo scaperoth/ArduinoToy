@@ -41,6 +41,7 @@
 #define CONTROLBIT 512
 #define ADDRESSBIT 511
 
+#define NULLTERM '\0'
 
 /*#################################
  #
@@ -94,6 +95,7 @@ void mem_read(void);
 
 //TIMING FUNCTION(S)
 void increment_timer(void);
+void check_timer_variables(void);
 
 
 /*##############################
@@ -118,27 +120,37 @@ char message[] = {
   20, 96, 21, 114, 22, 88, 23, 5, 8, 135, 8, 146, 5, 128, 153, 5, 170, 154, 8, 188, 5, 152, 5, 170, 8,128,146,8,135,8,144,5,8,191,162,5,8,134,187};
 
 //The sounds array contains the commands to send robot sounds to the SpeakJet chip.
-char humidity_sounds[] = {
-  201};
+
 char range_sounds[] = {
-  220};
+  207,208,4,207,22,222,200,19,205,221,255, NULLTERM};
+
+char humidity_sounds[] = {
+  254,223,4,222,5,207,4,238, NULLTERM};
+  
 char c02_sounds[] = {
-  240};
+  240, NULLTERM};
 
 /***************************
  * TIMING VARIABLES
  ***************************/
 //init relative timer
 int timer = 0;
+int action_timer = 0; //keep parallel timer for sounds and other actions so they don't occur simultaneously
 //delay for whole program
 int global_delay = 100;
+int delay_minutes_conv = (60000/global_delay);
+int delay_seconds_conv = (1000/global_delay);
 
 //delay for various sensors and components
 double rom_minutes = .0017; //how often to save sensor data
 double humid_speaker_seconds = 4; //how long to wait to alarm
+double ranger_speaker_seconds = 2; //how long to wait to alarm
 
-int rom_delay = rom_minutes * (60000/global_delay); //minutes relative to global delay
-int humid_speaker_delay = humid_speaker_seconds * (1000/global_delay); //seconds relative to global delay
+int rom_delay = rom_minutes * delay_minutes_conv; //minutes relative to global delay
+int humid_speaker_delay = humid_speaker_seconds * delay_seconds_conv; //seconds relative to global delay
+int ranger_speaker_delay = ranger_speaker_seconds * delay_seconds_conv; //seconds relative to global delay
+
+int sound_playing= 0; //maintain delay for all ranger sounds
 
 /***************************
  * LED VARIABLES
@@ -147,7 +159,7 @@ int fade_reset = 40;
 int fadeAmount = fade_reset; //amount to fade by each iteration
 int brightness = 0; //start fade value at 0
 int memory_full_pin = 11;//memory full pin used to alert user 
-                         //when the EEPROM is full by fading in and out
+//when the EEPROM is full by fading in and out
 
 /***************************
  * HUMIDITY SETUP
@@ -232,6 +244,7 @@ void set_humidity_pins(int new_DHT22_pin){
  *   void set_humidity_alarm(int)
  *   void set_range_alarm(int)
  *   void set_mem_full_led(int)
+ *   void check_timer_variables()
  ***************************/
 void set_humidity_alarm(int new_humidity_alarm){
   humidity_alarm_value = new_humidity_alarm;
@@ -270,6 +283,8 @@ void set_humidity_sensor_delay(double new_humidity_delay){
  *
  * CONTENTS:
  *   void setup_voicebox()
+ *   void play_sounds(char[])
+ *   void play_sounds(char sounds[])
  ***************************/
 /**
  * Sets voicebox shield to all 
@@ -303,6 +318,17 @@ void setup_voicebox(){
   delay(100);
   digitalWrite(RES, HIGH);
 
+}
+/**
+ * play voicebox sounds passed into function
+ * sets lock for sound playing and 
+ * resets the action_timer
+ */
+void play_sounds(char sounds[]){
+  //Serial.println("Play Sound");
+  speakjet.print(sounds);
+  sound_playing = 1;
+  action_timer=0; //restart action timer
 }
 
 /***************************
@@ -407,10 +433,10 @@ void activate_bargraph(){
     num_leds = (int)(humidity_val/3.33); //convert to 0-30
     fill_leds(num_leds); //light up leds
   }
+
   //alarm if humidity is below alarm value and proper increment is reached
-  if(humidity_val>=humidity_alarm_value && timer%humid_speaker_delay ==0){
-    //Serial.println("Play Sound");
-    speakjet.print(humidity_sounds);
+  if(humidity_val>=humidity_alarm_value && !sound_playing){
+    play_sounds(humidity_sounds);
   }
 }
 
@@ -446,8 +472,8 @@ void find_range(){
 
   //Serial.println(distance);
   //set off alarm if distance is lte alarm value
-  if(distance<=range_alarm_value){
-    speakjet.print(range_sounds);
+  if(distance<=range_alarm_value && !sound_playing){
+    play_sounds(range_sounds);
   }
 }
 
@@ -550,18 +576,41 @@ void mem_read(){
  * TIMING FUNCTION(S)
  * 
  * CONTENTS:
- *   void increment_timer()
+ *   void check_timer_variables()
  ***************************/
+/**
+ * Resets control variables for 
+ * speaker sounds to maintain global delay
+ *
+ * when adding a new sound action, add a new
+ * if statement here
+ */
+void check_timer_variables(){
+  if(action_timer%humid_speaker_delay ==0 && sound_playing == 1){
+    sound_playing = 0;
+  }
+  
+  if(action_timer%humid_speaker_delay ==0 && sound_playing == 1){
+    sound_playing = 0;
+  }
+}
 /**
  * timer that keeps relative time for
  * the various sensors
  */
 void increment_timer(){
+  //increment global timer and action timer
   timer=timer + 1;
+  action_timer = action_timer +1 ;
+  //unlock timer if necessary
+  check_timer_variables();
   if(timer>=1000){
     timer = 0;
   }
 }
+
+
+
 
 
 
