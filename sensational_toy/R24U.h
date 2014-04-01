@@ -146,12 +146,8 @@ int humid_speaker_delay = humid_speaker_seconds * (1000/global_delay); //seconds
 int fade_reset = 40;
 int fadeAmount = fade_reset; //amount to fade by each iteration
 int brightness = 0; //start fade value at 0
-/*
- * memory full pin used to alert user 
- * when the EEPROM is full by fading in 
- * and out
- */
-int memory_full_pin = 11;
+int memory_full_pin = 11;//memory full pin used to alert user 
+                         //when the EEPROM is full by fading in and out
 
 /***************************
  * HUMIDITY SETUP
@@ -188,6 +184,7 @@ int echoPin = 10; //echo to pin 10
  * C0 SENSOR VARIABLES
  ***************************/
 int c0sensorval;
+int c0sensorPin = A0;
 
 /***************************
  * MEM CONTROL VARIABLES
@@ -461,7 +458,7 @@ void find_range(){
  *   void get_C0_value()
  ***************************/
 void get_C0_value(){
-  sensorValue = analogRead(0);       // read analog input pin 0
+  c0sensorval = analogRead(c0sensorPin);       // read analog input pin 0
   //do something with the c0 sensor...
   //Serial.println(sensorValue, DEC);  // prints the value read
 }
