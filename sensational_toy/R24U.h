@@ -66,11 +66,15 @@ void set_humidity_sensor_delay(double);
 
 //VOICEBOX FUNCTION(S)
 void setup_voicebox(void);
+void play_sounds(char sounds[]);
+void check_sound_lock();
 
 //LED FUNCTION(S)
 void setup_leds(void);
+void turn_on_full_rgb(void);
+void turn_off_rgb(void);
 void alert_led(int);
-void led_off(int);
+void reset_fade(void);
 
 //HUMIDITY FUNCTION(S)
 int check_humidity_sensor(void);
@@ -95,7 +99,6 @@ void mem_read(void);
 
 //TIMING FUNCTION(S)
 void increment_timer(void);
-void check_timer_variables(void);
 
 
 /*##############################
@@ -138,19 +141,22 @@ int timer = 0;
 int action_timer = 0; //keep parallel timer for sounds and other actions so they don't occur simultaneously
 //delay for whole program
 int global_delay = 100;
+int sound_delay = 1; //default delay for all sounds
 int delay_minutes_conv = (60000/global_delay);
 int delay_seconds_conv = (1000/global_delay);
 
 //delay for various sensors and components
 double rom_minutes = .0017; //how often to save sensor data
-double humid_speaker_seconds = 4; //how long to wait to alarm
-double ranger_speaker_seconds = 2; //how long to wait to alarm
+double humid_speaker_seconds = 10; //how long to wait to alarm
+double ranger_speaker_seconds = 1; //how long to wait to alarm
 
 int rom_delay = rom_minutes * delay_minutes_conv; //minutes relative to global delay
+
+//delay for sounds
 int humid_speaker_delay = humid_speaker_seconds * delay_seconds_conv; //seconds relative to global delay
 int ranger_speaker_delay = ranger_speaker_seconds * delay_seconds_conv; //seconds relative to global delay
 
-int sound_playing= 0; //maintain delay for all ranger sounds
+int sound_playing= 0; //lock for sounds
 
 /***************************
  * LED VARIABLES
@@ -159,6 +165,9 @@ int fade_reset = 40;
 int fadeAmount = fade_reset; //amount to fade by each iteration
 int brightness = 0; //start fade value at 0
 int memory_full_pin = 11;//memory full pin used to alert user 
+int rgb_redPin = A5;
+int rgb_bluePin = A4;
+int rgb_grnPin = A3;
 //when the EEPROM is full by fading in and out
 
 /***************************
@@ -283,8 +292,8 @@ void set_humidity_sensor_delay(double new_humidity_delay){
  *
  * CONTENTS:
  *   void setup_voicebox()
- *   void play_sounds(char[])
  *   void play_sounds(char sounds[])
+ *   void check_sound_lock()
  ***************************/
 /**
  * Sets voicebox shield to all 
@@ -324,11 +333,26 @@ void setup_voicebox(){
  * sets lock for sound playing and 
  * resets the action_timer
  */
-void play_sounds(char sounds[]){
+void play_sounds(char sounds[], int delay_value){
   //Serial.println("Play Sound");
+  turn_on_full_rgb();
   speakjet.print(sounds);
   sound_playing = 1;
+  sound_delay = delay_value;
   action_timer=0; //restart action timer
+}
+/**
+ * Resets control variables for 
+ * speaker sounds to maintain global delay
+ *
+ * when adding a new sound action, add a new
+ * if statement here
+ */
+void check_sound_lock(){
+  if(action_timer%sound_delay ==0 && sound_playing == 1){
+    sound_playing = 0;
+    turn_off_rgb();
+  }
 }
 
 /***************************
@@ -336,8 +360,10 @@ void play_sounds(char sounds[]){
  * 
  * CONTENTS:
  *  void setup_leds()
+ *  reset_fade()
+ *  void turn_on_full_rgb()
+ *  turn_off_rgb()
  *  void alert_led(int)
- *  void led_off(int)
  ***************************/
 /**
  * Sets initial values of 
@@ -345,6 +371,33 @@ void play_sounds(char sounds[]){
  */
 void setup_leds(){
   pinMode(memory_full_pin, OUTPUT);
+  pinMode(rgb_redPin, OUTPUT);
+  pinMode(rgb_bluePin, OUTPUT);
+  pinMode(rgb_grnPin, OUTPUT);
+}
+/**
+ * resets fade values
+ */
+void reset_fade(){
+  //reset fades
+  fadeAmount = fade_reset; 
+  brightness = 0;
+}
+/**
+ * turns on all values of rgb
+ */
+void turn_on_full_rgb(){
+  digitalWrite(rgb_redPin, HIGH);    
+  digitalWrite(rgb_bluePin, HIGH);   
+  digitalWrite(rgb_grnPin, HIGH);   
+}
+/**
+ * turns off all pi of rgb
+ */
+void turn_off_rgb(){
+  digitalWrite(rgb_redPin, LOW);    
+  digitalWrite(rgb_bluePin, LOW);   
+  digitalWrite(rgb_grnPin, LOW);   
 }
 /** 
  * fades a pin in and out based on the 
@@ -362,15 +415,7 @@ void alert_led(int fadepin){
     fadeAmount = -fadeAmount ; 
   }     
 }
-/** 
- * turns off an LED
- */
-void led_off(int led_pin){
-  digitalWrite(led_pin, LOW);
-  //reset fades
-  fadeAmount = fade_reset; 
-  brightness = 0;
-}
+
 
 /***************************
  * HUMIDITY FUNCTION(S)
@@ -436,7 +481,7 @@ void activate_bargraph(){
 
   //alarm if humidity is below alarm value and proper increment is reached
   if(humidity_val>=humidity_alarm_value && !sound_playing){
-    play_sounds(humidity_sounds);
+    play_sounds(humidity_sounds, humid_speaker_delay);
   }
 }
 
@@ -473,7 +518,7 @@ void find_range(){
   //Serial.println(distance);
   //set off alarm if distance is lte alarm value
   if(distance<=range_alarm_value && !sound_playing){
-    play_sounds(range_sounds);
+    play_sounds(range_sounds, ranger_speaker_delay);
   }
 }
 
@@ -566,7 +611,8 @@ void mem_read(){
   alert_led(memory_full_pin);
   //wait until a Serial connection is made
   if(Serial){ 
-    led_off(memory_full_pin);
+    digitalWrite(memory_full_pin,LOW);
+    reset_fade();
     readData();
     reset_mem();
   }
@@ -576,24 +622,8 @@ void mem_read(){
  * TIMING FUNCTION(S)
  * 
  * CONTENTS:
- *   void check_timer_variables()
+ *   void increment_timer()
  ***************************/
-/**
- * Resets control variables for 
- * speaker sounds to maintain global delay
- *
- * when adding a new sound action, add a new
- * if statement here
- */
-void check_timer_variables(){
-  if(action_timer%humid_speaker_delay ==0 && sound_playing == 1){
-    sound_playing = 0;
-  }
-  
-  if(action_timer%humid_speaker_delay ==0 && sound_playing == 1){
-    sound_playing = 0;
-  }
-}
 /**
  * timer that keeps relative time for
  * the various sensors
@@ -603,7 +633,7 @@ void increment_timer(){
   timer=timer + 1;
   action_timer = action_timer +1 ;
   //unlock timer if necessary
-  check_timer_variables();
+  check_sound_lock();
   if(timer>=1000){
     timer = 0;
   }
